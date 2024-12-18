@@ -1,0 +1,73 @@
+version: '3.8'
+
+services:
+  user_service:
+    build:
+      context: ./user_service
+      dockerfile: Dockerfile
+    volumes:
+      - ./user_service/static:/app/static
+    ports:
+      - "8000:8000"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: yourpassword
+      POSTGRES_DB: user_service_db
+      POSTGRES_HOST: db_user
+    depends_on:
+      - db_user
+    networks:
+      - backend
+
+  course_service:
+    build:
+      context: ./course_service
+      dockerfile: Dockerfile
+    volumes:
+      - ./course_service/static:/app/static
+    ports:
+      - "8001:8000"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: yourpassword
+      POSTGRES_DB: course_service_db
+      POSTGRES_HOST: db_course
+    depends_on:
+      - db_course
+      - user_service  # Для гарантии, что user_service запускается раньше
+    networks:
+      - backend
+
+  db_user:
+    image: postgres:16.4
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: yourpassword
+      POSTGRES_DB: user_service_db
+    ports:
+      - "5432:5432"  # Порт для внешнего доступа
+    volumes:
+      - user_data:/var/lib/postgresql/data
+    networks:
+      - backend
+
+  db_course:
+    image: postgres:16.4
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: yourpassword
+      POSTGRES_DB: course_service_db
+    ports:
+      - "5433:5432"  # Порт для внешнего доступа
+    volumes:
+      - course_data:/var/lib/postgresql/data
+    networks:
+      - backend
+
+networks:
+  backend:
+    driver: bridge
+
+volumes:
+  user_data:
+  course_data:
